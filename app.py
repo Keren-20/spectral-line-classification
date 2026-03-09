@@ -1,62 +1,99 @@
-import streamlit as st
-import pandas as pd
-import joblib
-import matplotlib.pyplot as plt
+import streamlit as st # pyright: ignore[reportMissingImports]
+import pandas as pd # pyright: ignore[reportMissingModuleSource]
+import numpy as np # pyright: ignore[reportMissingImports]
+import joblib # type: ignore
+import matplotlib.pyplot as plt # pyright: ignore[reportMissingModuleSource]
 
-# Page Settings
+# Page configuration
 st.set_page_config(
-    page_title="Spectral Classification",
-    page_icon="🔭",
+    page_title="Spectral Line Classifier",
+    page_icon="🔬",
     layout="wide"
 )
 
-# Title
-st.title("🔭 Spectral Line Classification")
-st.write("This app classifies astronomical objects using spectral data.")
+# Load model and scaler
+model = joblib.load("model.pkl")
+scaler = joblib.load("scaler.pkl")
+
+# Custom CSS Styling
+st.markdown("""
+    <style>
+        .main {
+            background-color: #f4f6f9;
+        }
+        h1 {
+            color: #1f4e79;
+        }
+        .stButton>button {
+            background-color: #1f77b4;
+            color: white;
+            font-size: 16px;
+            border-radius: 8px;
+            padding: 8px 20px;
+        }
+    </style>
+""", unsafe_allow_html=True)
+
+# Title Section
+st.title("🔬 Spectral Line Classification System")
+st.markdown("### Machine Learning Based Atomic Spectral Analysis")
+
+st.markdown("---")
 
 # Sidebar
-st.sidebar.header("Upload Data")
-uploaded_file = st.sidebar.file_uploader(
-    "Upload CSV file",
-    type=["csv"]
-)
-st.sidebar.write("Example objects: Star, Galaxy, Quasar")
+st.sidebar.header("⚙️ Application Settings")
+show_plot = st.sidebar.checkbox("Show Spectral Plot", value=True)
+show_data = st.sidebar.checkbox("Show Uploaded Data", value=True)
 
-# Load Model
-model = joblib.load("model.pkl")
-# If file uploaded
+uploaded_file = st.file_uploader("📂 Upload Spectral CSV File", type=["csv"])
+
 if uploaded_file is not None:
 
-    df = pd.read_csv(uploaded_file)
+    data = pd.read_csv(uploaded_file)
 
-    col1, col2 = st.columns(2)
+    if show_data:
+        st.subheader("📊 Uploaded Data Preview")
+        st.dataframe(data.head())
 
-    # -------- DATA PREVIEW --------
-    with col1:
-        st.subheader("Dataset Preview")
-        st.dataframe(df.head())
+    # Separate features
+    if "label" in data.columns:
+        X = data.drop("label", axis=1)
+    else:
+        X = data
 
-    # -------- PREDICTION --------
-    with col2:
-        st.subheader("Prediction Result")
+    # Visualization Section
+    if show_plot:
+        st.subheader("📈 Spectral Curve (First Sample)")
+        fig, ax = plt.subplots()
+        ax.plot(X.iloc[0])
+        ax.set_xlabel("Wavelength Index")
+        ax.set_ylabel("Intensity")
+        ax.set_title("Spectral Signature")
+        st.pyplot(fig)
 
-        prediction = model.predict(df)
+    # Prediction Section
+    st.subheader("🤖 Model Prediction")
 
-        st.success(f"Predicted Object: {prediction[0]}")
+    X_scaled = scaler.transform(X)
+    predictions = model.predict(X_scaled)
 
-    # -------- GRAPH --------
-    st.subheader("Spectral Line Graph")
+    data["Predicted_Label"] = predictions
 
-    fig, ax = plt.subplots()
-    ax.plot(df.iloc[0])
-    ax.set_xlabel("Wavelength Index")
-    ax.set_ylabel("Intensity")
-    ax.set_title("Spectral Intensity Plot")
+    st.success("✅ Classification Completed Successfully!")
 
-    st.pyplot(fig)
+    st.dataframe(data.head())
+
+    # Download Button
+    csv = data.to_csv(index=False).encode("utf-8")
+    st.download_button(
+        "⬇ Download Predictions",
+        csv,
+        "spectral_predictions.csv",
+        "text/csv"
+    )
 
 else:
-    st.info("Upload a CSV file from the sidebar to begin.")
+    st.info("Please upload a CSV file to begin classification.")
 
-# Footer
 st.markdown("---")
+st.markdown("© 2026 Spectral Line Classification Project | B.Sc Physics")
