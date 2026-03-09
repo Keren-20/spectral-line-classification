@@ -99,15 +99,15 @@ if uploaded_file is not None:
     st.dataframe(data.head())
 
     if st.button("Run Classification"):
-    X_scaled = scaler.transform(X)
-    predictions = model.predict(X_scaled)
-    data["Predicted_Label"] = predictions
-    st.success("Prediction Completed")
-    st.dataframe(data.head())
-
+       X_scaled = scaler.transform(X)
+       predictions = model.predict(X_scaled)
+       data["Predicted_Label"] = predictions
+       st.success("Prediction Completed")
+       st.dataframe(data.head())
 else:
     st.info("Please upload a CSV file to begin classification.")
 
 st.markdown("---")
 
 st.markdown("© 2026 Spectral Line Classification Project | B.Sc Physics")
+
