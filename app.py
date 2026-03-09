@@ -1,113 +1,66 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import joblib
 import matplotlib.pyplot as plt
 
-# Page configuration
-st.set_page_config(
-    page_title="Spectral Line Classifier",
-    page_icon="🔬",
-    layout="wide"
-)
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import classification_report
 
-# Load model and scaler
-model = joblib.load("model.pkl")
-scaler = joblib.load("scaler.pkl")
-st.sidebar.subheader("Model Information")
-st.sidebar.write("Model Used: Logistic Regression")
-st.sidebar.write("Features: 181 Spectral Bands")
-st.sidebar.write("Model Accuracy: 92%")
+st.title("Spectral Line Classification")
 
-# Custom CSS Styling
-st.markdown("""
-    <style>
-        .main {
-            background-color: #f4f6f9;
-        }
-        h1 {
-            color: #1f4e79;
-        }
-        .stButton>button {
-            background-color: #1f77b4;
-            color: white;
-            font-size: 16px;
-            border-radius: 8px;
-            padding: 8px 20px;
-        }
-    </style>
-""", unsafe_allow_html=True)
-
-# Title Section
-st.title("🔬 Spectral Line Classification System")
-st.markdown("### Machine Learning Based Atomic Spectral Analysis")
-
-st.markdown("---")
-
-# Sidebar
-st.sidebar.header("⚙️ Application Settings")
-show_plot = st.sidebar.checkbox("Show Spectral Plot", value=True)
-show_data = st.sidebar.checkbox("Show Uploaded Data", value=True)
-
-uploaded_file = st.file_uploader("📂 Upload Spectral CSV File", type=["csv"])
-
-st.subheader("Spectral Curve Visualization")
-
-import matplotlib.pyplot as plt
-
-fig, ax = plt.subplots()
-ax.plot(X.iloc[0])
-ax.set_xlabel("Wavelength Band")
-ax.set_ylabel("Intensity")
-ax.set_title("Spectral Signature")
-st.pyplot(fig)
+# Upload dataset
+uploaded_file = st.file_uploader("Upload spectral dataset CSV", type=["csv"])
 
 if uploaded_file is not None:
 
-    data = pd.read_csv(uploaded_file)
+    df = pd.read_csv(uploaded_file)
 
-    if show_data:
-        st.subheader("📊 Uploaded Data Preview")
-        st.dataframe(data.head())
+    st.subheader("Dataset Preview")
+    st.write(df.head())
 
-    # Separate features
-    if "label" in data.columns:
-        X = data.drop("label", axis=1)
-    else:
-        X = data
+    # Assume last column is the label
+    X = df.iloc[:, :-1]
+    y = df.iloc[:, -1]
 
-    # Visualization Section
-    if show_plot:
-        st.subheader("📈 Spectral Curve (First Sample)")
-        fig, ax = plt.subplots()
-        ax.plot(X.iloc[0])
-        ax.set_xlabel("Wavelength Index")
-        ax.set_ylabel("Intensity")
-        ax.set_title("Spectral Signature")
-        st.pyplot(fig)
+    st.write("Feature shape:", X.shape)
+    st.write("Label shape:", y.shape)
 
-    # Prediction Section
-    st.subheader("🤖 Model Prediction")
+    # Plot first spectrum
+    st.subheader("Example Spectrum")
 
-    X_scaled = scaler.transform(X)
-    predictions = model.predict(X_scaled)
+    fig, ax = plt.subplots()
+    ax.plot(X.iloc[0])
+    ax.set_xlabel("Wavelength Index")
+    ax.set_ylabel("Intensity")
+    ax.set_title("First Spectrum")
 
-    data["Predicted_Label"] = predictions
+    st.pyplot(fig)
 
-    st.success("✅ Classification Completed Successfully!")
+    # Train/test split
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.2, random_state=42
+    )
 
-    st.dataframe(data.head())
+    # Train model
+    model = RandomForestClassifier(n_estimators=200)
 
-    if st.button("Run Classification"):
-       X_scaled = scaler.transform(X)
-       predictions = model.predict(X_scaled)
-       data["Predicted_Label"] = predictions
-       st.success("Prediction Completed")
-       st.dataframe(data.head())
-else:
-    st.info("Please upload a CSV file to begin classification.")
+    model.fit(X_train, y_train)
 
-st.markdown("---")
+    # Evaluate
+    y_pred = model.predict(X_test)
 
-st.markdown("© 2026 Spectral Line Classification Project | B.Sc Physics")
+    st.subheader("Model Performance")
 
+    report = classification_report(y_test, y_pred, output_dict=True)
+
+    st.dataframe(pd.DataFrame(report).transpose())
+
+    # Predict single spectrum
+    st.subheader("Predict First Spectrum")
+
+    if st.button("Predict"):
+
+        prediction = model.predict([X.iloc[0]])
+
+        st.success(f"Predicted Class: {prediction[0]}")
