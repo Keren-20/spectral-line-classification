@@ -1,66 +1,62 @@
 import streamlit as st
 import pandas as pd
-import numpy as np
+import joblib
 import matplotlib.pyplot as plt
 
-from sklearn.model_selection import train_test_split
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import classification_report
+# Page Settings
+st.set_page_config(
+    page_title="Spectral Classification",
+    page_icon="🔭",
+    layout="wide"
+)
 
-st.title("Spectral Line Classification")
+# Title
+st.title("🔭 Spectral Line Classification")
+st.write("This app classifies astronomical objects using spectral data.")
 
-# Upload dataset
-uploaded_file = st.file_uploader("Upload spectral dataset CSV", type=["csv"])
+# Sidebar
+st.sidebar.header("Upload Data")
+uploaded_file = st.sidebar.file_uploader(
+    "Upload CSV file",
+    type=["csv"]
+)
+st.sidebar.write("Example objects: Star, Galaxy, Quasar")
 
+# Load Model
+model = joblib.load("model.pkl")
+# If file uploaded
 if uploaded_file is not None:
 
     df = pd.read_csv(uploaded_file)
 
-    st.subheader("Dataset Preview")
-    st.write(df.head())
+    col1, col2 = st.columns(2)
 
-    # Assume last column is the label
-    X = df.iloc[:, :-1]
-    y = df.iloc[:, -1]
+    # -------- DATA PREVIEW --------
+    with col1:
+        st.subheader("Dataset Preview")
+        st.dataframe(df.head())
 
-    st.write("Feature shape:", X.shape)
-    st.write("Label shape:", y.shape)
+    # -------- PREDICTION --------
+    with col2:
+        st.subheader("Prediction Result")
 
-    # Plot first spectrum
-    st.subheader("Example Spectrum")
+        prediction = model.predict(df)
+
+        st.success(f"Predicted Object: {prediction[0]}")
+
+    # -------- GRAPH --------
+    st.subheader("Spectral Line Graph")
 
     fig, ax = plt.subplots()
-    ax.plot(X.iloc[0])
+    ax.plot(df.iloc[0])
     ax.set_xlabel("Wavelength Index")
     ax.set_ylabel("Intensity")
-    ax.set_title("First Spectrum")
+    ax.set_title("Spectral Intensity Plot")
 
     st.pyplot(fig)
 
-    # Train/test split
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.2, random_state=42
-    )
+else:
+    st.info("Upload a CSV file from the sidebar to begin.")
 
-    # Train model
-    model = RandomForestClassifier(n_estimators=200)
-
-    model.fit(X_train, y_train)
-
-    # Evaluate
-    y_pred = model.predict(X_test)
-
-    st.subheader("Model Performance")
-
-    report = classification_report(y_test, y_pred, output_dict=True)
-
-    st.dataframe(pd.DataFrame(report).transpose())
-
-    # Predict single spectrum
-    st.subheader("Predict First Spectrum")
-
-    if st.button("Predict"):
-
-        prediction = model.predict([X.iloc[0]])
-
-        st.success(f"Predicted Class: {prediction[0]}")
+# Footer
+st.markdown("---")
