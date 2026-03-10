@@ -84,8 +84,8 @@ if uploaded_file is not None:
     confidence = probabilities.max(axis=1)
 
      # Add results to dataset
-     data["Predicted_Label"] = predictions
-     data["Confidence"] = confidence
+    data["Predicted_Label"] = predictions
+    data["Confidence"] = confidence
 
     st.success("✅ Classification Completed Successfully!")
 
@@ -105,5 +105,6 @@ else:
 
 st.markdown("---")
 st.markdown("© 2026 Spectral Line Classification Project | B.Sc Physics")
+
 
 
