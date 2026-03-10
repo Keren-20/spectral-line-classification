@@ -72,16 +72,16 @@ if uploaded_file is not None:
         st.pyplot(fig)
 
     # Prediction Section
-     st.subheader("🤖 Model Prediction")
+    st.subheader("🤖 Model Prediction")
 
-     X_scaled = scaler.transform(X)
+    X_scaled = scaler.transform(X)
 
      # Predictions
-     predictions = model.predict(X_scaled)
+    predictions = model.predict(X_scaled)
 
      # Prediction probabilities (confidence)
-     probabilities = model.predict_proba(X_scaled)
-     confidence = probabilities.max(axis=1)
+    probabilities = model.predict_proba(X_scaled)
+    confidence = probabilities.max(axis=1)
 
      # Add results to dataset
      data["Predicted_Label"] = predictions
@@ -105,4 +105,5 @@ else:
 
 st.markdown("---")
 st.markdown("© 2026 Spectral Line Classification Project | B.Sc Physics")
+
 
